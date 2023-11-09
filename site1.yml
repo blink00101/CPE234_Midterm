@@ -1,0 +1,28 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+  - name: Install necessary packages for firewall setup on Ubuntu
+    ansible.builtin.apt:
+      name: ufw
+      state: present
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Install necessary packages for firewall setup on CentOS
+    ansible.builtin.yum:
+      name: firewalld
+      state: present
+    when: ansible_distribution == 'CentOS'
+
+#  - name: Configure and enable firewall on Ubuntu
+#    ansible.builtin.shell:
+#      cmd: ufw enable
+#    when: ansible_distribution == 'Ubuntu'
+
+  - name: Configure and enable firewall on CentOS
+    ansible.builtin.service:
+      name: firewalld
+      state: started
+      enabled: yes
+    when: ansible_distribution == 'CentOS'

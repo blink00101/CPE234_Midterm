@@ -1,0 +1,58 @@
+---
+- hosts: all
+  become: true 
+  tasks:
+
+  - name: Install ufw
+    ansible.builtin.apt:
+      name: ufw
+      state: present
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Install necessary packages
+    ansible.builtin.package:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - ufw
+      - firewalld
+
+  - name: Start and enable firewalld service
+    ansible.builtin.service:
+      name: firewalld
+      state: started
+      enabled: yes
+    when: ansible_distribution == 'CentOS'
+
+  - name: Start and enable ufw service
+    ansible.builtin.service:
+      name: ufw
+      state: started
+      enabled: yes
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Configure default firewall rules
+    ansible.builtin.ufw:
+      rule: allow
+      from_ip: "{{ item }}"
+      port: "{{ item }}"
+    loop:
+      - 22
+      - 80
+      - 443
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Add and configure firewall rules
+    ansible.builtin.firewalld:
+      service: "{{ item.service }}"
+      permanent: yes
+      state: enabled
+    loop:
+      - service: ssh
+      - service: http
+      - service: https
+    when: ansible_distribution == 'CentOS'
+
+  - name: Reload firewall configuration
+    ansible.builtin.command: firewall-cmd --reload
+    when: ansible_distribution == 'CentOS'
